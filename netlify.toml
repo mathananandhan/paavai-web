@@ -1,6 +1,11 @@
 [build]
   publish = "."
 
+# Netlify auto-installs requirements.txt (used by the Streamlit/Docker deployment).
+# Python 3.14 has no prebuilt pygame/mediapipe wheels, so pin a version that does.
+[build.environment]
+  PYTHON_VERSION = "3.11"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
