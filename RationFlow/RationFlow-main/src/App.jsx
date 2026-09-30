@@ -246,6 +246,7 @@ export default function App() {
         <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', gap: '0.5rem', overflowX: 'auto' }}>
           {[
             { id: 'dashboard', label: '📊 Dashboard & Analytics', desc: 'Realtime Stock & AI Insights' },
+            { id: 'gesture', label: '🖐️ AI Gesture Signals', desc: 'Silent Signals Camera Engine' },
             { id: 'dispatch', label: '⚡ Dispatch & QR Scanner', desc: 'Scan & Dispense Ration' },
             { id: 'registry', label: '🎴 Beneficiaries & QR Gen', desc: 'Cardholder Management' },
             { id: 'stock', label: '📦 Inventory Control', desc: 'Warehouse & Grain Stock' },
@@ -273,11 +274,20 @@ export default function App() {
         </div>
       </nav>
 
+
       {/* MAIN CONTENT AREA */}
       <main style={{ flex: 1, maxWidth: '1400px', width: '100%', margin: '2rem auto', padding: '0 1.5rem' }}>
 
+        {/* TAB: GESTURE AI ENGINE */}
+        {activeTab === 'gesture' && (
+          <div style={{ width: '100%', height: '85vh', borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <iframe src="/gesture.html" style={{ width: '100%', height: '100%', border: 'none' }} title="Silent Signals AI Gesture Detection Engine" />
+          </div>
+        )}
+
         {/* TAB 1: DASHBOARD */}
         {activeTab === 'dashboard' && (
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             
             {/* STAT CARDS ROW */}

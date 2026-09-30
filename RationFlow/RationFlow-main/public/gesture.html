@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Silent Signals - AI Hand Gesture Detection</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: #0b0f19; color: #f8fafc; min-height: 100vh; display: flex; flex-direction: column; }
+        header { background-color: #111827; padding: 18px 24px; border-bottom: 1px solid #1f2937; display: flex; justify-content: space-between; align-items: center; }
+        .logo-title h1 { font-size: 1.5rem; color: #38bdf8; display: flex; align-items: center; gap: 8px; }
+        .logo-title p { font-size: 0.85rem; color: #9ca3af; margin-top: 2px; }
+        .container { display: flex; flex: 1; padding: 20px; gap: 20px; max-width: 1400px; margin: 0 auto; width: 100%; }
+        .sidebar { width: 300px; background-color: #111827; border-radius: 12px; padding: 20px; border: 1px solid #1f2937; display: flex; flex-direction: column; gap: 16px; }
+        .sidebar h2 { font-size: 1.05rem; color: #f8fafc; border-bottom: 1px solid #1f2937; padding-bottom: 8px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        label { font-size: 0.8rem; color: #9ca3af; font-weight: 500; }
+        select, input { background-color: #1f2937; border: 1px solid #374151; color: #f8fafc; padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; outline: none; }
+        select:focus, input:focus { border-color: #3b82f6; }
+        .main-content { flex: 1; display: flex; flex-direction: column; gap: 16px; }
+        .metrics-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+        .metric-card { background-color: #111827; border-radius: 12px; padding: 16px; border: 1px solid #1f2937; text-align: center; }
+        .metric-value { font-size: 1.8rem; font-weight: 700; color: #38bdf8; }
+        .metric-label { font-size: 0.8rem; color: #9ca3af; margin-top: 4px; }
+        .content-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; flex: 1; }
+        .video-box { background-color: #111827; border-radius: 12px; padding: 16px; border: 1px solid #1f2937; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; min-height: 440px; }
+        video { display: none; }
+        canvas { width: 100%; height: auto; border-radius: 8px; background-color: #000; max-height: 460px; object-fit: contain; }
+        .controls-bar { margin-bottom: 12px; display: flex; gap: 10px; width: 100%; }
+        button { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border-radius: 8px; border: none; padding: 10px 18px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+        button:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
+        button.btn-stop { background: linear-gradient(135deg, #dc2626, #b91c1c); }
+        .log-box { background-color: #111827; border-radius: 12px; padding: 16px; border: 1px solid #1f2937; display: flex; flex-direction: column; }
+        .log-box h3 { font-size: 1rem; margin-bottom: 10px; }
+        .log-table-container { flex: 1; overflow-y: auto; max-height: 380px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #1f2937; }
+        th { color: #9ca3af; font-weight: 600; }
+        .alert-banner { background-color: #0284c7; color: white; padding: 10px 14px; border-radius: 8px; display: none; align-items: center; justify-content: space-between; font-size: 0.85rem; }
+        .alert-banner a { color: #bae6fd; font-weight: 600; text-decoration: underline; }
+        @media (max-width: 900px) { .container { flex-direction: column; } .sidebar { width: 100%; } .content-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo-title">
+            <h1>🖐️ Silent Signals</h1>
+            <p>Netlify Client AI Hand Gesture Detection Engine</p>
+        </div>
+        <div>
+            <span style="font-size: 0.85rem; color: #10b981; font-weight: 600;">⚡ Netlify Deployment Ready</span>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="sidebar">
+            <h2>⚙️ Config Panel</h2>
+
+            <div class="form-group">
+                <label>🌏 Speech Language</label>
+                <select id="langSelect">
+                    <option value="en-US">English</option>
+                    <option value="ta-IN">Tamil</option>
+                    <option value="hi-IN">Hindi</option>
+                    <option value="es-ES">Spanish</option>
+                    <option value="fr-FR">French</option>
+                    <option value="de-DE">German</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>🎯 Notification Channel</label>
+                <select id="alertMode">
+                    <option value="voice">🔊 Voice Speech Only</option>
+                    <option value="whatsapp">💬 WhatsApp Alert Only</option>
+                    <option value="both">✅ Voice + WhatsApp</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>📞 WhatsApp Number</label>
+                <input type="text" id="phoneNum" value="+919876543210">
+            </div>
+
+            <div class="form-group">
+                <label>✏️ Gesture Meanings</label>
+                <input type="text" id="msg1" value="I need food!">
+                <input type="text" id="msg2" value="I need to go to the toilet!">
+                <input type="text" id="msg3" value="I need water!">
+                <input type="text" id="msg4" value="Help needed!">
+                <input type="text" id="msg5" value="Come here!">
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="metrics-row">
+                <div class="metric-card">
+                    <div class="metric-value" id="activeGesture">None</div>
+                    <div class="metric-label">Active Gesture</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="fpsDisplay">0</div>
+                    <div class="metric-label">Live FPS</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="logCount">0</div>
+                    <div class="metric-label">Logged Events</div>
+                </div>
+            </div>
+
+            <div class="alert-banner" id="waBanner">
+                <span>💬 WhatsApp Alert Generated!</span>
+                <a id="waLink" href="#" target="_blank">Click to Send on WhatsApp</a>
+            </div>
+
+            <div class="content-grid">
+                <div class="video-box">
+                    <div class="controls-bar">
+                        <button id="startBtn">▶️ Start Camera</button>
+                        <button id="stopBtn" class="btn-stop">⏹ Stop Camera</button>
+                    </div>
+                    <video id="webcam" playsinline></video>
+                    <canvas id="outputCanvas" width="640" height="480"></canvas>
+                </div>
+
+                <div class="log-box">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <h3>📜 Activity History</h3>
+                        <button id="clearLogBtn" style="padding:4px 10px; font-size:0.75rem;">Clear</button>
+                    </div>
+                    <div class="log-table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Gesture</th>
+                                    <th>Message</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const videoElement = document.getElementById('webcam');
+        const canvasElement = document.getElementById('outputCanvas');
+        const canvasCtx = canvasElement.getContext('2d');
+
+        const activeGestureEl = document.getElementById('activeGesture');
+        const fpsDisplayEl = document.getElementById('fpsDisplay');
+        const logCountEl = document.getElementById('logCount');
+        const logTableBody = document.getElementById('logTableBody');
+        const waBanner = document.getElementById('waBanner');
+        const waLink = document.getElementById('waLink');
+
+        let camera = null;
+        let isDetecting = false;
+        let gestureBuffer = [];
+        const bufferSize = 7;
+        let detectedFinger = null;
+        let lastGestureTime = 0;
+        let lastWhatsAppTime = 0;
+        let totalLogs = 0;
+
+        let frameCount = 0;
+        let lastFpsTime = performance.now();
+
+        function getMessage(fingers) {
+            const id = `msg${fingers}`;
+            const el = document.getElementById(id);
+            return el ? el.value : `${fingers} Fingers`;
+        }
+
+        function speakMessage(text, lang) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = lang;
+                utterance.rate = 0.95;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function triggerWhatsApp(message, phone) {
+            const now = Date.now();
+            if (now - lastWhatsAppTime < 20000) return;
+            lastWhatsAppTime = now;
+
+            const cleanPhone = phone.replace(/[^\d+]/g, '');
+            const encoded = encodeURIComponent(message);
+            const url = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encoded}`;
+            
+            waLink.href = url;
+            waBanner.style.display = 'flex';
+        }
+
+        function addLogEntry(gesture, message) {
+            totalLogs++;
+            logCountEl.innerText = totalLogs;
+
+            const now = new Date().toLocaleTimeString();
+            const row = document.createElement('tr');
+            row.innerHTML = `<td>${now}</td><td>${gesture}</td><td>${message}</td>`;
+            logTableBody.insertBefore(row, logTableBody.firstChild);
+        }
+
+        function countFingers(landmarks) {
+            let raised = 0;
+            const thumbTip = landmarks[4];
+            const thumbMcp = landmarks[2];
+            const pinkyMcp = landmarks[17];
+
+            const distTipPinky = Math.hypot(thumbTip.x - pinkyMcp.x, thumbTip.y - pinkyMcp.y);
+            const distMcpPinky = Math.hypot(thumbMcp.x - pinkyMcp.x, thumbMcp.y - pinkyMcp.y);
+
+            if (distTipPinky > distMcpPinky * 1.25) {
+                raised++;
+            }
+
+            const tips = [8, 12, 16, 20];
+            const pips = [6, 10, 14, 18];
+
+            for (let i = 0; i < tips.length; i++) {
+                if (landmarks[tips[i]].y < landmarks[pips[i]].y) {
+                    raised++;
+                }
+            }
+            return raised;
+        }
+
+        function onResults(results) {
+            frameCount++;
+            const now = performance.now();
+            if (now - lastFpsTime >= 500) {
+                fpsDisplayEl.innerText = Math.round((frameCount * 1000) / (now - lastFpsTime));
+                frameCount = 0;
+                lastFpsTime = now;
+            }
+
+            canvasCtx.save();
+            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+
+            let totalFingers = 0;
+
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                for (const landmarks of results.multiHandLandmarks) {
+                    drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, {color: '#38bdf8', lineWidth: 3});
+                    drawLandmarks(canvasCtx, landmarks, {color: '#2563eb', lineWidth: 1, radius: 4});
+                    totalFingers += countFingers(landmarks);
+                }
+
+                gestureBuffer.push(totalFingers);
+                if (gestureBuffer.length > bufferSize) gestureBuffer.shift();
+
+                const matches = gestureBuffer.filter(x => x === totalFingers).length;
+                if (matches >= bufferSize - 1) {
+                    const currentTime = Date.now();
+                    if (totalFingers !== detectedFinger && (currentTime - lastGestureTime > 2000)) {
+                        if (totalFingers >= 1 && totalFingers <= 5) {
+                            detectedFinger = totalFingers;
+                            lastGestureTime = currentTime;
+                            activeGestureEl.innerText = `${totalFingers} Finger(s)`;
+
+                            const msg = getMessage(totalFingers);
+                            addLogEntry(`${totalFingers} Fingers`, msg);
+
+                            const mode = document.getElementById('alertMode').value;
+                            const lang = document.getElementById('langSelect').value;
+                            const phone = document.getElementById('phoneNum').value;
+
+                            if (mode === 'voice' || mode === 'both') {
+                                speakMessage(msg, lang);
+                            }
+                            if (mode === 'whatsapp' || mode === 'both') {
+                                triggerWhatsApp(msg, phone);
+                            }
+                        }
+                    }
+                }
+            } else {
+                gestureBuffer = [];
+                detectedFinger = null;
+                activeGestureEl.innerText = 'None';
+            }
+
+            canvasCtx.restore();
+        }
+
+        const hands = new Hands({
+            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+        });
+
+        hands.setOptions({
+            maxNumHands: 2,
+            modelComplexity: 1,
+            minDetectionConfidence: 0.65,
+            minTrackingConfidence: 0.65
+        });
+
+        hands.onResults(onResults);
+
+        document.getElementById('startBtn').addEventListener('click', () => {
+            if (!isDetecting) {
+                isDetecting = true;
+                camera = new Camera(videoElement, {
+                    onFrame: async () => {
+                        if (isDetecting) await hands.send({image: videoElement});
+                    },
+                    width: 640,
+                    height: 480
+                });
+                camera.start();
+            }
+        });
+
+        document.getElementById('stopBtn').addEventListener('click', () => {
+            isDetecting = false;
+            if (camera) {
+                camera.stop();
+            }
+            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            activeGestureEl.innerText = 'None';
+        });
+
+        document.getElementById('clearLogBtn').addEventListener('click', () => {
+            logTableBody.innerHTML = '';
+            totalLogs = 0;
+            logCountEl.innerText = '0';
+        });
+    </script>
+</body>
+</html>
