@@ -1,7 +1,11 @@
 *.venv
+.venv/
 venv/
 env/
 node_modules/
+__pycache__/
+*.mp3
+PyWhatKit_DB.txt
 *.h5
 *.pkl
 *.pt
@@ -17,3 +21,13 @@ Thumbs.db
 bin/
 obj/
 *.class
+
+# Secrets and Environment
+.env
+.env.*
+*.env*
+*.local
+*.pem
+*.key
+
+

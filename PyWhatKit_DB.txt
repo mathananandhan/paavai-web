@@ -88,3 +88,13 @@ Time: 10:28
 Phone Number: +91 6374486830
 Message: I need food!
 --------------------
+Date: 18/9/2026
+Time: 15:10
+Phone Number: +916374486830
+Message: I need water!
+--------------------
+Date: 18/9/2026
+Time: 15:13
+Phone Number: +916374486830
+Message: Urgent emotion detected: Sad
+--------------------
