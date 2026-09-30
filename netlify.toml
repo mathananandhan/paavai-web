@@ -1,12 +1,5 @@
 [build]
-  base = "RationFlow/RationFlow-main"
-  command = "npm run build"
-  publish = "dist"
-
-[[redirects]]
-  from = "/gesture"
-  to = "/gesture.html"
-  status = 200
+  publish = "."
 
 [[redirects]]
   from = "/*"
